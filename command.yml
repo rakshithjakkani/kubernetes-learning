@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: command
+  labels:
+    name: command
+spec:
+  containers:
+    - name: command-container
+      image: busybox
+      ports:
+        - containerPort: 8080
+      command: ["sleep", "100"] # ENTRYPOINT----> which is not overridable
+      # args: ["sleep","100"]  # CMD----> which is not overridable
+      # command: ["sleep"]
+      # args: ["100"]
+
+      # If I mention something in ENTRYPOINT in docker image and i didn't mention anything in Command field in manifest then container refer image command.
+      # If I mention anything in Kubernets command field and mention in Image also then container command field would be considerd.
+      # If I mention ENTRYPOINT in image and mentioned args field in kubernetes then image command would be considered.

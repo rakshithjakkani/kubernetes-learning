@@ -1,0 +1,149 @@
+============
+Commands 
+============
+* kubectl proxy  --port 8080----> to see the number of kubernets apis.
+* kubectl api-resources----> to get the list of kubernetes apis.
+* kubectl explain pod----> to get explanation of pod manifest.
+* kubectl expain deploy.spec.containers----> to show the container fied specification to write manifest.
+------> POD COMMANDS
+* kubectl explain pod----> to get explanation of pod manifest.
+* kubectl run <PodName> --image=<image>-----> command to create a pod 
+* kubectl run <PodName> --image=<image> --port=80 -----> command to create a pod with port 
+* kubectl run <PodName> --image=<image> --port=80 --dry-run=client -o yaml-----> to give the yaml output with dry run 
+* kubectl run nginx --image=nginx ---> command to create a deployement.
+* kubectl run <podname> --image=nginx --port=80 --labels=env=prod----> to create a pod with labels called env=prod
+* kubectl get po -l env=prod---> to get pods which are having labels env=prod
+* kubectl get po --show-labels ---> to get the pods with labels.
+* kubectl label po <podName> key=value ----> to attach the labels to pod 
+* kubectl label po <podName> key- ----> to remove the labels.
+* kubectl label pods --all key=value ----> to label the all pods 
+------> Deployement
+(--record is used to record the changes made to present revision and the change we can see by rollout history.)
+* kubectl create deploy <deployementName> --image=<imageName> --replicas=1.2.3.4.... --port=<PortNumber>
+* kubectl scale deploy <deployementName> --replicas=1.2.3.4...
+* kubectl rollout restart deploy <deployementName> ---> to restart the deployement.
+* kubectl rollout history deploy <deployementName> ---> to get the number of revisions of a deployement.
+* kubectl rollout history deploy <DeployementName> revion <0.1.2.3.....> -----> to get the history of a particular revision of a deployement.
+*  kubectl rollout undo deploy <DeployementName> ----> to switch to one step back revision.
+* kubectl rollout undo deploy <DeployementName> --to-revion <0.1.2.3.....> ----> to roll back to the specific revision.
+* kubectl set image deploy <DeployementName> <containerName>=<newImage> --recode ---> to change the image to a particular deployment.
+------> Service
+* kubectl expose deploy <DeployementName/pod/rs> --port=<servicePort> --target-port=8080 --> to create NodePort service type to deployment
+* kubectl expose deploy <DeployementName/pod/rs> --port=<servicePort> --target-port=8080 --type=NodePort ---> to create service type NodePort.
+* kubectl expose deploy <DeployementName/pod/rs> --port=<servicePort> --target-port=8080 --dry-run=client -o yaml---> to generate the yaml configuration file 
+* kubectl expose deploy <DeployementName/pod/rs> --port=<servicePort> --target-port=8080 --dry-run=client -o yaml > service.yaml ----> to store yaml configuration in a file. 
+
+====================
+Kube API-Server
+====================
+* when you want to interact with the kubernetes cluster, you request to the kube-apiserver and then kube-apiserver will allow you to 
+  access objects inside the cluster. 
+* The only kubernetes compenent that connect to the ETCD is the Kube-apiserver.
+* kubectl get po----->kube-apiserver---->ETCD the data which you visiting is actually coming from the ETCD.
+* The authentication and authorization is happend at the kube-apiserver.
+-------> POD creation background flow 
+* kubectl create pod---->kube-apiserver(checks with the authentication and authorization)---->etcd(kube-apiserver invokes the etcd and put some metedata in etcd)
+  ---->kube-apiserver(after putting information in etcd, etcd give responce to the apiserver, then calls scheduler)----->scheduler(will check availabe nodes and give
+  responce back to the apiserver)--->kube-apiserver(writes the node data to etcd, then calls kubelet)---->kubelet(calls the docker.sock and create a pod and give back responce to the apiserver)
+  ---->kube-apiserver(writes the completion of creating pod writes to the etcd)------>etcd.
+
+
+kubernetes apis:-
+-----------------
+* kuberntes has number of apis for each objects running in the cluster like shows in below
+    - 127.0.0.1:8080/api/v1/pods
+    - 127.0.0.1:8080/api/v1/Service
+    - 127.0.0.1:8080/apps/v1/deploy
+    - like the above showed apis are availabe for your kubernetes cluster 
+* when you execute "kubectl get pods", in background the api call (127.0.0.1:8080/api/v1/pods) recieved by the cluster.
+* To know list of apis availabe first expose the kubernetes cluster using command "kubectl proxy --port 8080" and access through browser. then you'll get list of apis availabe for kubernetes.
+
+
+===============
+Kube-scheduler
+===============
+* Scheduler will give the report about nodes when launching a pod. And kube-apiserver will contact the suitable kubelet which sits inside the node 
+* Scheduler will tell to the apiserver about appropriate node to be used, based on the below factors  
+    - resource requirement
+    - Hardware and Software policy constraints 
+    - Affinity & Anti-Affinity
+    - Data Locality
+
+
+=======================
+commands and Arguments
+=======================
+IMP:- Docker image CMD and ENTRYPOINT commands can be overridable in kubernetes by commands and args feilds.
+* command and args are the same as CMD=args and Command=ENTRYPOINT in kuberntes
+* If I mention something in ENTRYPOINT in docker image and i didn't mention anything in Command field in manifest then container refer image command.
+* If I mention anything in Kubernets command field and mention in Image also then kubernetes container command field would be considerd.
+* If I mention ENTRYPOINT in image and mentioned args field in kubernetes then image command would be considered.
+
+
+====================================
+connection to the kubernetes cluster
+====================================
+* download the kubeconfig file of a cluster and make your kubectl to use the downloaded kubeconfig file 
+* kubectl --kubeconfig "k8s.kubeconfig" and execute the commands after that like kubectl --kubeconfig "k8s.kubeconfig" get nodes
+* to avoid the above headache create ".kube" folder create file called "config" and paste the content of kubeconfig file in that. 
+
+----> Minikube:-
+* To use minikube, we need to enable hyperv in our local machine if we want to install minikube in our local.
+* By default minikube uses VirtualBox to operate kubernetes cluster. But when we want to make use of hyperv we need to enable it. 
+* To start minikube by using hyperv use command " minikube start --vm-driver hyperv --hyperv-virtual-switch "Default Switch" "
+----> minikube in linux
+* To start minikube minikube start --vm-driver=none --extra-config=kubelet.cgroup-driver=systemd
+
+=============
+Replica Sets
+============= 
+* The only difference between Deployement and ReplicaSet is:-
+  * while using ReplicaSet there is no revisions, it means that we cannot update the image, either we have to delete whole ReplicaSet and recreate 
+    or kubernetes will delete whole ReplicaSet(Replication pods of replicaset). 
+  * while using Deployement we can adjust the replicas of a deployement that how many are should be running and how many updated image pods should come up. 
+  * In deployement roll back is also can be downloaded
+
+==============
+Deployement
+==============
+* While updating our app we can choose that, how many pods should serve the traffic with older app and how many pods should come up with updated app 
+* For the above case the strategy we used is rollingUpdate(maxSurge and maxUnavailable)
+  * maxSurge = how many new pods should come up while updating.(it will come on top of existing pods)
+  * maxUnavailable = how many older pods should killed by Deployement.
+
+===============
+Batch Jobs:-
+===============
+Jobf ----> Run to complete
+CronJob ----> Run on a schedhuled time 
+
+===============
+service: - 
+===============
+* service is gateway to the kubernetes pods. service will distribute the incoming traffic to the appropriate pod depending upon the load
+* Endpoints to the service is basically pods (we call pods as a Endpoints in service perpective)
+* when we create a service using labels and selectors, in the background there will be creation of correspondent Endpoint which is associated with the pods 
+* there are four types of service are there and they are....
+  - NodePort
+  - ClusterIP
+  - loadBalancer
+  - ExternalName
+* while creating service type LoadBalancer, in the backend there would be NodePort 
+* when we use installed or single server provisioned kubernetes cluster, then we cannot create a LoadBalancer.
+
+===========
+Ingress: -
+===========
+* kubernetes Ingress is a collection of routing rules which governs how external users access the service running within the kubernetes cluster.
+* Ingress can provide various features and they are...
+  - Load Balancing.
+  - SSL Termination.
+  - Named-based virtual routing.
+* there are two components in ingres and they are 
+  - Ingress resource
+    * ingress resource contains a set of rules based on which traffic is routed to a service. 
+  - Ingress controller
+    * Ingress controller takes care of the Layer 7 proxy to implement ingress rules.
+    * You much have ingress controller installed in you kubernetes cluster to implement the ingress routing rules. Ingress resource is useless untill you install ingress controller.
+    
+  
