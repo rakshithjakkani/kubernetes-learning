@@ -1,6 +1,9 @@
 ============
 Commands 
 ============
+------> Special commands
+* kubectl get pods -A --no-headers | wc -l ---> command to show number of pods in a number
+------> 
 * kubectl proxy  --port 8080----> to see the number of kubernets apis.
 * kubectl api-resources----> to get the list of kubernetes apis.
 * kubectl explain pod----> to get explanation of pod manifest.
